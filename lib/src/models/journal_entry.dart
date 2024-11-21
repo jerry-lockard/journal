@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class JournalEntry {
   final String id;
+  final String userId;
+  final String username;
   final String content;
   final DateTime createdAt;
   final DateTime? updatedAt;
@@ -12,6 +14,8 @@ class JournalEntry {
 
   JournalEntry({
     required this.id,
+    required this.userId,
+    required this.username,
     required this.content,
     required this.createdAt,
     this.updatedAt,
@@ -25,6 +29,8 @@ class JournalEntry {
     final data = doc.data() as Map<String, dynamic>;
     return JournalEntry(
       id: doc.id,
+      userId: data['userId'] ?? '',
+      username: data['username'] ?? '',
       content: data['content'] ?? '',
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       updatedAt: data['updatedAt'] != null
@@ -39,6 +45,8 @@ class JournalEntry {
 
   Map<String, dynamic> toMap() {
     return {
+      'userId': userId,
+      'username': username,
       'content': content,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': updatedAt != null ? Timestamp.fromDate(updatedAt!) : null,
@@ -50,6 +58,8 @@ class JournalEntry {
   }
 
   JournalEntry copyWith({
+    String? userId,
+    String? username,
     String? content,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -60,6 +70,8 @@ class JournalEntry {
   }) {
     return JournalEntry(
       id: id,
+      userId: userId ?? this.userId,
+      username: username ?? this.username,
       content: content ?? this.content,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,

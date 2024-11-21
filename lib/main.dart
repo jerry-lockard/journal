@@ -4,10 +4,17 @@ import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:journal/src/theme/app_theme.dart';
 import 'package:journal/src/screens/home_screen.dart';
+import 'firebase_options.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
+
+FirebaseAnalytics analytics = FirebaseAnalytics.instance;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  await analytics.setAnalyticsCollectionEnabled(true); // Enable analytics
   runApp(const ProviderScope(child: JournalApp()));
 }
 
@@ -24,6 +31,10 @@ class JournalApp extends StatelessWidget {
           darkTheme: AppTheme.darkTheme(darkDynamic),
           themeMode: ThemeMode.system,
           debugShowCheckedModeBanner: false,
+          navigatorObservers: [
+            FirebaseAnalyticsObserver(
+                analytics: analytics), // Add analytics observer
+          ],
           home: const HomeScreen(),
         );
       },

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import '../widgets/custom_calendar.dart';
 import '../widgets/journal_entry_form.dart';
 import '../widgets/journal_entry_card.dart';
@@ -10,6 +11,15 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Firebase Analytics instance
+    final FirebaseAnalytics analytics = FirebaseAnalytics.instance;
+
+    // Log screen view when this screen is loaded
+    analytics.logScreenView(
+      screenName: 'HomeScreen',
+      screenClass: 'HomeScreen',
+    );
+
     final theme = Theme.of(context);
     final screenWidth = MediaQuery.of(context).size.width;
     final isWideScreen = screenWidth > 1200;
@@ -26,12 +36,28 @@ class HomeScreen extends ConsumerWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.home_outlined),
-            onPressed: () {},
+            onPressed: () {
+              // Example: Log an event when the home button is pressed
+              analytics.logEvent(
+                name: 'home_button_clicked',
+                parameters: {
+                  'timestamp': DateTime.now().toIso8601String(),
+                },
+              );
+            },
             tooltip: 'Home',
           ),
           IconButton(
             icon: const Icon(Icons.settings_outlined),
-            onPressed: () {},
+            onPressed: () {
+              // Example: Log an event when the settings button is pressed
+              analytics.logEvent(
+                name: 'settings_button_clicked',
+                parameters: {
+                  'timestamp': DateTime.now().toIso8601String(),
+                },
+              );
+            },
             tooltip: 'Settings',
           ),
           const SizedBox(width: 8),
@@ -48,10 +74,21 @@ class HomeScreen extends ConsumerWidget {
                   Padding(
                     padding: const EdgeInsets.all(16),
                     child: entriesForDate.when(
-                      data: (entries) => Text(
-                        '${entries.length} entries',
-                        style: theme.textTheme.titleMedium,
-                      ),
+                      data: (entries) {
+                        // Log event for entries loaded
+                        analytics.logEvent(
+                          name: 'entries_loaded',
+                          parameters: {
+                            'date': selectedDate.toIso8601String(),
+                            'entry_count': entries.length,
+                          },
+                        );
+
+                        return Text(
+                          '${entries.length} entries',
+                          style: theme.textTheme.titleMedium,
+                        );
+                      },
                       loading: () => const Text('Loading...'),
                       error: (_, __) => const Text('Error loading entries'),
                     ),
@@ -61,6 +98,14 @@ class HomeScreen extends ConsumerWidget {
                       data: (counts) => CustomCalendar(
                         selectedDate: selectedDate,
                         onDateSelected: (date) {
+                          // Log event for date selected
+                          analytics.logEvent(
+                            name: 'date_selected',
+                            parameters: {
+                              'selected_date': date.toIso8601String()
+                            },
+                          );
+
                           ref.read(selectedDateProvider.notifier).state = date;
                         },
                         entryCountByDate: counts,
@@ -87,6 +132,16 @@ class HomeScreen extends ConsumerWidget {
                     ),
                     child: JournalEntryForm(
                       onSubmit: (content, imageUrl, tags) async {
+                        // Log event when a journal entry is created
+                        analytics.logEvent(
+                          name: 'entry_created',
+                          parameters: {
+                            'content_length': content.length,
+                            'image_provided': imageUrl != null,
+                            'tag_count': tags.length,
+                          },
+                        );
+
                         await journalNotifier.createEntry(
                           content: content,
                           imageUrl: imageUrl,
@@ -108,10 +163,18 @@ class HomeScreen extends ConsumerWidget {
                           return JournalEntryCard(
                             entry: entry,
                             onTap: () {
-                              // TODO: Implement entry view
+                              // Log event when an entry is viewed
+                              analytics.logEvent(
+                                name: 'entry_viewed',
+                                parameters: {'entry_id': entry.id},
+                              );
                             },
                             onEdit: () {
-                              // TODO: Implement entry edit
+                              // Log event when an entry is edited
+                              analytics.logEvent(
+                                name: 'entry_edited',
+                                parameters: {'entry_id': entry.id},
+                              );
                             },
                             onDelete: () async {
                               final confirmed = await showDialog<bool>(
@@ -137,6 +200,12 @@ class HomeScreen extends ConsumerWidget {
                               );
 
                               if (confirmed == true) {
+                                // Log event when an entry is deleted
+                                analytics.logEvent(
+                                  name: 'entry_deleted',
+                                  parameters: {'entry_id': entry.id},
+                                );
+
                                 await journalNotifier.deleteEntry(entry.id);
                               }
                             },

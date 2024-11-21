@@ -1,26 +1,35 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import '../models/journal_entry.dart';
+import '../providers/journal_provider.dart';
 
-class JournalEntryForm extends StatefulWidget {
+class JournalEntryForm extends ConsumerStatefulWidget {
   final JournalEntry? initialEntry;
-  final Function(String content, String? imageUrl, List<String> tags) onSubmit;
+  final VoidCallback? onSuccess;
 
   const JournalEntryForm({
     super.key,
     this.initialEntry,
-    required this.onSubmit,
+    this.onSuccess,
+    required Future<Null> Function(
+            dynamic content, dynamic imageUrl, dynamic tags)
+        onSubmit,
   });
 
   @override
-  State<JournalEntryForm> createState() => _JournalEntryFormState();
+  ConsumerState<JournalEntryForm> createState() => _JournalEntryFormState();
 }
 
-class _JournalEntryFormState extends State<JournalEntryForm> {
+class _JournalEntryFormState extends ConsumerState<JournalEntryForm> {
   late final TextEditingController _contentController;
   String? _imageUrl;
+  String? _localImagePath;
   final List<String> _tags = [];
   final _formKey = GlobalKey<FormState>();
   bool _isSubmitting = false;
+  final _imagePicker = ImagePicker();
 
   @override
   void initState() {
@@ -40,10 +49,76 @@ class _JournalEntryFormState extends State<JournalEntryForm> {
     super.dispose();
   }
 
-  void _handleSubmit() {
-    if (_formKey.currentState!.validate()) {
-      setState(() => _isSubmitting = true);
-      widget.onSubmit(_contentController.text, _imageUrl, _tags);
+  Future<void> _pickImage() async {
+    try {
+      final pickedFile = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1200,
+        maxHeight: 1200,
+        imageQuality: 85,
+      );
+
+      if (pickedFile != null) {
+        setState(() {
+          _localImagePath = pickedFile.path;
+          _imageUrl = null; // Clear previous image URL
+        });
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error picking image: $e')),
+      );
+    }
+  }
+
+  Future<void> _handleSubmit() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isSubmitting = true);
+
+    try {
+      final journalNotifier = ref.read(journalNotifierProvider.notifier);
+      String? finalImageUrl = _imageUrl;
+
+      // Upload new image if selected
+      if (_localImagePath != null) {
+        finalImageUrl = await journalNotifier.uploadImage(_localImagePath!);
+      }
+
+      if (widget.initialEntry != null) {
+        // Update existing entry
+        final updatedEntry = widget.initialEntry!.copyWith(
+          content: _contentController.text,
+          imageUrl: finalImageUrl,
+          tags: _tags,
+          updatedAt: DateTime.now(),
+        );
+        await journalNotifier.updateEntry(updatedEntry);
+      } else {
+        // Create new entry
+        await journalNotifier.createEntry(
+          content: _contentController.text,
+          imageUrl: finalImageUrl,
+          tags: _tags,
+        );
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Journal entry saved successfully!')),
+        );
+        widget.onSuccess?.call();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error saving journal entry: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
     }
   }
 
@@ -56,6 +131,46 @@ class _JournalEntryFormState extends State<JournalEntryForm> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (_localImagePath != null || _imageUrl != null) ...[
+            Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: _localImagePath != null
+                      ? Image.file(
+                          File(_localImagePath!),
+                          height: 200,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                        )
+                      : Image.network(
+                          _imageUrl!,
+                          height: 200,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                        ),
+                ),
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () {
+                      setState(() {
+                        _localImagePath = null;
+                        _imageUrl = null;
+                      });
+                    },
+                    style: IconButton.styleFrom(
+                      backgroundColor: theme.colorScheme.surface,
+                      foregroundColor: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+          ],
           TextFormField(
             controller: _contentController,
             maxLines: null,
@@ -82,32 +197,31 @@ class _JournalEntryFormState extends State<JournalEntryForm> {
             children: [
               IconButton(
                 icon: const Icon(Icons.image_outlined),
-                onPressed: () {
-                  // TODO: Implement image upload
-                },
+                onPressed: _isSubmitting ? null : _pickImage,
                 tooltip: 'Add Image',
               ),
               IconButton(
                 icon: const Icon(Icons.tag_outlined),
-                onPressed: () {
-                  // Show tag input dialog
-                  showDialog(
-                    context: context,
-                    builder: (context) => _AddTagDialog(
-                      onAddTag: (tag) {
-                        if (!_tags.contains(tag)) {
-                          setState(() => _tags.add(tag));
-                        }
+                onPressed: _isSubmitting
+                    ? null
+                    : () {
+                        showDialog(
+                          context: context,
+                          builder: (context) => _AddTagDialog(
+                            onAddTag: (tag) {
+                              if (!_tags.contains(tag)) {
+                                setState(() => _tags.add(tag));
+                              }
+                            },
+                          ),
+                        );
                       },
-                    ),
-                  );
-                },
                 tooltip: 'Add Tag',
               ),
               const Spacer(),
               FilledButton(
                 onPressed: _isSubmitting ? null : _handleSubmit,
-                child: Text(_isSubmitting ? 'Posting...' : 'Post'),
+                child: Text(_isSubmitting ? 'Saving...' : 'Save'),
               ),
             ],
           ),
@@ -119,9 +233,11 @@ class _JournalEntryFormState extends State<JournalEntryForm> {
               children: _tags.map((tag) {
                 return Chip(
                   label: Text(tag),
-                  onDeleted: () {
-                    setState(() => _tags.remove(tag));
-                  },
+                  onDeleted: _isSubmitting
+                      ? null
+                      : () {
+                          setState(() => _tags.remove(tag));
+                        },
                   backgroundColor: theme.colorScheme.secondaryContainer,
                   deleteIconColor: theme.colorScheme.onSecondaryContainer,
                 );

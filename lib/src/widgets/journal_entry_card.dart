@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/journal_entry.dart';
+import '../providers/journal_provider.dart';
 
-class JournalEntryCard extends StatelessWidget {
+class JournalEntryCard extends ConsumerWidget {
   final JournalEntry entry;
   final VoidCallback? onTap;
   final VoidCallback? onEdit;
@@ -17,8 +19,10 @@ class JournalEntryCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final currentUser = ref.watch(currentUserProvider);
+    final isOwner = currentUser?.uid == entry.userId;
 
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -30,7 +34,8 @@ class JournalEntryCard extends StatelessWidget {
           children: [
             if (entry.imageUrl != null)
               ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(16)),
                 child: Image.network(
                   entry.imageUrl!,
                   height: 200,
@@ -45,28 +50,43 @@ class JournalEntryCard extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      Text(
-                        DateFormat('MMM d, yyyy').format(entry.createdAt),
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.primary,
-                        ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            entry.username,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            DateFormat('MMM d, yyyy • h:mm a')
+                                .format(entry.createdAt),
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
                       ),
                       const Spacer(),
-                      if (onEdit != null)
-                        IconButton(
-                          icon: const Icon(Icons.edit_outlined),
-                          onPressed: onEdit,
-                          tooltip: 'Edit',
-                        ),
-                      if (onDelete != null)
-                        IconButton(
-                          icon: const Icon(Icons.delete_outline),
-                          onPressed: onDelete,
-                          tooltip: 'Delete',
-                        ),
+                      if (isOwner) ...[
+                        if (onEdit != null)
+                          IconButton(
+                            icon: const Icon(Icons.edit_outlined),
+                            onPressed: onEdit,
+                            tooltip: 'Edit',
+                          ),
+                        if (onDelete != null)
+                          IconButton(
+                            icon: const Icon(Icons.delete_outline),
+                            onPressed: onDelete,
+                            tooltip: 'Delete',
+                          ),
+                      ],
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 12),
                   Text(
                     entry.content,
                     style: theme.textTheme.bodyLarge,
@@ -88,7 +108,8 @@ class JournalEntryCard extends StatelessWidget {
                           ),
                           backgroundColor: theme.colorScheme.secondaryContainer,
                           padding: const EdgeInsets.symmetric(horizontal: 4),
-                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          materialTapTargetSize:
+                              MaterialTapTargetSize.shrinkWrap,
                         );
                       }).toList(),
                     ),
@@ -98,7 +119,7 @@ class JournalEntryCard extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: theme.colorScheme.surfaceVariant,
+                        color: theme.colorScheme.surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
@@ -119,6 +140,26 @@ class JournalEntryCard extends StatelessWidget {
                           ),
                         ],
                       ),
+                    ),
+                  ],
+                  if (entry.mood != null) ...[
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.mood,
+                          size: 16,
+                          color: theme.colorScheme.primary,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          entry.mood!,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.primary,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ],

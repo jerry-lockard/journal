@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to the Journal app will be documented in this file.
+All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -9,41 +9,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Initial project setup with Flutter
-- Firebase integration (Core, Auth, Firestore, Storage)
-- Material You dynamic theming
-- Journal entry model and services
-- Custom calendar widget
-- Journal entry card and form widgets
-- Riverpod state management setup
-- Gemini AI integration for entry analysis
-- Basic CRUD operations for journal entries
-- Image attachment support
-- Tag management system
-- Date-based entry filtering
-- Git configuration:
-  - Proper `.gitignore` setup
-  - Platform-specific directories included
-  - Generated files excluded
-  - Sensitive data protection
+- Firebase Authentication integration
+- User-specific journal entries with `userId` and `username` fields
+- Image upload functionality with Firebase Storage
+- User profile management system
+- Authentication state providers with Riverpod
+- User-specific data access and security rules
+- Image preview in journal entry form
+- Username display in journal entry cards
+- Mood display in journal entries
+- User-specific action visibility (edit/delete)
+- Enhanced error handling and loading states
+- Comprehensive Firebase security rules
+- User validation for all journal operations
 
 ### Changed
 
-- Improved project structure and organization
-- Enhanced development documentation
-- Updated dependency versions
+- Refactored JournalEntry model to include user information
+- Updated JournalService with authentication checks
+- Enhanced JournalProvider with user-specific operations
+- Improved JournalEntryCard UI with user attribution
+- Converted JournalEntryForm to ConsumerStatefulWidget
+- Updated Firebase storage paths to be user-specific
+- Enhanced error handling across all operations
+- Improved state management with Riverpod
+- Updated README with comprehensive setup instructions
 
-### Pending
+### Security
 
-- User authentication implementation
-- Advanced search functionality
-- Export/backup feature
-- More granular AI interactions
-- Comprehensive test suite
-- Firebase security rules
-- Offline mode
-- Cross-platform sync
+- Added Firebase Authentication
+- Implemented user-specific data access
+- Added secure entry management
+- Added user validation for all operations
+- Configured Firebase security rules
+- Protected user data and uploads
 
-## [0.1.0] - YYYY-MM-DD
+## [0.1.0] - 2024-01-XX
 
-- Initial development release
+### Added
+
+- Initial release
+- Basic journal entry functionality
+- Material You dynamic theming
+- Calendar view
+- Basic Firebase integration
+- Simple journal entry form
+- Entry list view
+- Dark/Light theme support

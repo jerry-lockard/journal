@@ -49,7 +49,7 @@ lib/firebase_options.dart
 
 # Environment files
 .env
-.env.*;
+.env.*
 !.env.example
 
 # Android keystore files
@@ -74,3 +74,21 @@ fastlane/Preview.html
 fastlane/screenshots
 fastlane/test_output
 fastlane/readme.md
+
+# Node.js related (if used for tools like Firebase CLI or Webpack)
+node_modules/
+
+# Firebase Hosting related (optional, if using Firebase Hosting)
+/firebase-debug.log
+/firebase-debug.log.*
+/build/web/
+
+# Logs and lockfiles
+*.log
+*.lock
+
+# IDE-specific backups
+*.bak
+*.tmp
+*.temp
+/D:/nottyboi.me/journal/.env.web
