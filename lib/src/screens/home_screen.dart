@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
-import '../widgets/custom_calendar.dart';
-import '../widgets/journal_entry_form.dart';
-import '../widgets/journal_entry_card.dart';
-import '../providers/journal_provider.dart';
+import '../shared/custom_calendar.dart';
+import '../shared/widgets/theme_toggle_button.dart';
+import '../features/journal/providers/journal_provider.dart';
+import '../features/journal/widgets/journal_entry_card.dart';
+import '../features/journal/widgets/journal_entry_form.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -60,6 +61,7 @@ class HomeScreen extends ConsumerWidget {
             },
             tooltip: 'Settings',
           ),
+          const ThemeToggleButton(),
           const SizedBox(width: 8),
         ],
       ),

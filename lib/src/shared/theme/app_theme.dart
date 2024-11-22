@@ -2,12 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 
 class AppTheme {
-  static ThemeData lightTheme(ColorScheme? dynamicColorScheme) {
-    final ColorScheme colorScheme = dynamicColorScheme ??
-        ColorScheme.fromSeed(
-          seedColor: Colors.blue,
-          brightness: Brightness.light,
-        );
+  static ThemeData light(ColorScheme? dynamicColor) {
+    final colorScheme = dynamicColor ?? ColorScheme.fromSeed(
+      seedColor: Colors.blue,
+      brightness: Brightness.light,
+    );
 
     return ThemeData(
       useMaterial3: true,
@@ -40,12 +39,11 @@ class AppTheme {
     );
   }
 
-  static ThemeData darkTheme(ColorScheme? dynamicColorScheme) {
-    final ColorScheme colorScheme = dynamicColorScheme ??
-        ColorScheme.fromSeed(
-          seedColor: Colors.blue,
-          brightness: Brightness.dark,
-        );
+  static ThemeData dark(ColorScheme? dynamicColor) {
+    final colorScheme = dynamicColor ?? ColorScheme.fromSeed(
+      seedColor: Colors.blue,
+      brightness: Brightness.dark,
+    );
 
     return ThemeData(
       useMaterial3: true,

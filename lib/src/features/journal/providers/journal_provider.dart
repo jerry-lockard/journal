@@ -1,9 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../models/journal_entry.dart';
+import '../../journal/models/journal_entry.dart'; // Unified import for JournalEntry
 import '../services/journal_service.dart';
-import '../services/ai_service.dart';
-import 'ai_provider.dart';
+import '../../ai/providers/ai_provider.dart';
 
 // Auth state provider
 final authStateProvider = StreamProvider<User?>((ref) {
@@ -22,12 +21,14 @@ final journalServiceProvider = Provider((ref) {
 
 final selectedDateProvider = StateProvider<DateTime>((ref) => DateTime.now());
 
-final entriesForDateProvider = StreamProvider.family<List<JournalEntry>, DateTime>(
+final entriesForDateProvider =
+    StreamProvider.family<List<JournalEntry>, DateTime>(
   (ref, date) {
     final journalService = ref.watch(journalServiceProvider);
     final user = ref.watch(currentUserProvider);
     if (user == null) return Stream.value([]);
-    return journalService.getEntriesForDate(date);
+    return journalService.getEntriesForDate(
+        date); // Ensure this returns the correct JournalEntry type
   },
 );
 
@@ -35,7 +36,7 @@ final entryCountsProvider = FutureProvider<Map<DateTime, int>>((ref) async {
   final journalService = ref.watch(journalServiceProvider);
   final user = ref.watch(currentUserProvider);
   if (user == null) return {};
-  
+
   final now = DateTime.now();
   final startDate = DateTime(now.year, now.month - 1, 1);
   final endDate = DateTime(now.year, now.month + 1, 0);
@@ -46,7 +47,8 @@ class JournalNotifier extends StateNotifier<AsyncValue<void>> {
   final JournalService _journalService;
   final Ref _ref;
 
-  JournalNotifier(this._journalService, this._ref) : super(const AsyncValue.data(null));
+  JournalNotifier(this._journalService, this._ref)
+      : super(const AsyncValue.data(null));
 
   Future<void> createEntry({
     required String content,

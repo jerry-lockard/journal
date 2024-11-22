@@ -148,27 +148,76 @@ flutter run
 
 ```bash
 lib/
-├── main.dart
-└── src/
-    ├── models/
-    │   └── journal_entry.dart      # Journal entry data model
-    ├── screens/
-    │   └── home_screen.dart        # Main screen with entries
-    ├── services/
-    │   ├── journal_service.dart    # Firebase operations
-    │   ├── ai_service.dart         # Gemini AI integration
-    │   └── firebase_service.dart   # Firebase setup
-    ├── providers/
-    │   ├── journal_provider.dart   # State management
-    │   └── ai_provider.dart        # AI state management
-    ├── theme/
-    │   └── app_theme.dart          # Material You theming
-    ├── utils/
-    └── widgets/
-        ├── custom_calendar.dart    # Calendar widget
-        ├── journal_entry_card.dart # Entry display
-        └── journal_entry_form.dart # Entry creation/editing
+├── src/
+    ├── features/           # Feature-based modules
+    │   ├── ai/            # AI-related features
+    │   │   ├── ai.dart    # Barrel file for AI exports
+    │   │   ├── providers/
+    │   │   │   └── ai_provider.dart
+    │   │   └── services/
+    │   │       └── ai_service.dart
+    │   ├── auth/          # Authentication feature
+    │   │   ├── auth.dart  # Barrel file for auth exports
+    │   │   ├── screens/
+    │   │   │   ├── login_screen.dart
+    │   │   │   └── signup_screen.dart
+    │   │   ├── providers/
+    │   │   │   └── auth_provider.dart
+    │   │   └── services/
+    │   │       └── auth_service.dart
+    │   └── journal/       # Journal feature
+    │       ├── journal.dart # Barrel file for journal exports
+    │       ├── models/
+    │       │   └── journal_entry.dart
+    │       ├── providers/
+    │       │   └── journal_provider.dart
+    │       ├── services/
+    │       │   └── journal_service.dart
+    │       └── widgets/
+    │           ├── journal_entry_card.dart
+    │           └── journal_entry_form.dart
+    └── shared/           # Shared utilities and components
+        ├── shared.dart   # Barrel file for shared exports
+        ├── theme/
+        │   └── app_theme.dart
+        └── utils/        # Shared utilities
 ```
+
+### Architecture Overview
+
+The project follows a feature-first architecture with the following organization:
+
+1. **Features Directory**: Contains feature-specific modules
+   - Each feature is self-contained with its own models, services, and UI
+   - Features communicate through well-defined interfaces
+   - Includes feature-specific barrel files for clean exports
+
+2. **Shared Directory**: Houses shared components and utilities
+   - Common widgets and utilities used across features
+   - Theme configuration
+   - Shared models and interfaces
+
+3. **Feature Structure**:
+   - `models/`: Feature-specific data models
+   - `providers/`: State management using Riverpod
+   - `services/`: Business logic and external service integration
+   - `screens/`: Feature-specific screens
+   - `widgets/`: Reusable UI components
+
+4. **Key Features**:
+   - **AI**: Gemini AI integration for journal insights
+   - **Auth**: Firebase Authentication and user management
+   - **Journal**: Core journaling functionality
+
+5. **State Management**:
+   - Uses Riverpod for scalable state management
+   - Feature-specific providers
+   - Clean separation of concerns
+
+6. **Dependencies**:
+   - Organized by feature
+   - Clear separation between UI and business logic
+   - Minimal cross-feature dependencies
 
 ## Dependencies
 

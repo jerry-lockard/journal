@@ -4,7 +4,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:uuid/uuid.dart';
 import '../models/journal_entry.dart';
-import '../services/ai_service.dart';
+import '../../ai/services/ai_service.dart';
 
 class JournalService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -24,7 +24,9 @@ class JournalService {
     List<String> tags = const [],
   }) async {
     final user = _auth.currentUser;
-    if (user == null) throw Exception('User must be logged in to create entries');
+    if (user == null) {
+      throw Exception('User must be logged in to create entries');
+    }
 
     final now = DateTime.now();
     final entryId = _uuid.v4();
@@ -33,7 +35,7 @@ class JournalService {
     final aiSummary = await _aiService.generateSummary(content);
     final mood = await _aiService.analyzeMood(content);
     final suggestedTags = await _aiService.suggestTags(content);
-    
+
     // Merge user-provided and AI-suggested tags
     final allTags = {...tags, ...suggestedTags}.toList();
 
@@ -69,7 +71,9 @@ class JournalService {
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) => JournalEntry.fromFirestore(doc)).toList();
+      return snapshot.docs
+          .map((doc) => JournalEntry.fromFirestore(doc))
+          .toList();
     });
   }
 
@@ -105,27 +109,38 @@ class JournalService {
   // Update an existing entry
   Future<void> updateEntry(JournalEntry entry) async {
     final user = _auth.currentUser;
-    if (user == null) throw Exception('User must be logged in to update entries');
-    if (entry.userId != user.uid) throw Exception('Cannot update entries of other users');
+    if (user == null) {
+      throw Exception('User must be logged in to update entries');
+    }
+    if (entry.userId != user.uid) {
+      throw Exception('Cannot update entries of other users');
+    }
 
     final updatedEntry = entry.copyWith(
       updatedAt: DateTime.now(),
       username: user.displayName ?? 'Anonymous',
     );
 
-    await _firestore.collection('entries').doc(entry.id).update(updatedEntry.toMap());
+    await _firestore
+        .collection('entries')
+        .doc(entry.id)
+        .update(updatedEntry.toMap());
   }
 
   // Delete an entry
   Future<void> deleteEntry(String entryId) async {
     final user = _auth.currentUser;
-    if (user == null) throw Exception('User must be logged in to delete entries');
+    if (user == null) {
+      throw Exception('User must be logged in to delete entries');
+    }
 
     final doc = await _firestore.collection('entries').doc(entryId).get();
     if (!doc.exists) throw Exception('Entry not found');
 
     final entry = JournalEntry.fromFirestore(doc);
-    if (entry.userId != user.uid) throw Exception('Cannot delete entries of other users');
+    if (entry.userId != user.uid) {
+      throw Exception('Cannot delete entries of other users');
+    }
 
     await _firestore.collection('entries').doc(entryId).delete();
   }
@@ -133,7 +148,9 @@ class JournalService {
   // Upload an image and get its URL
   Future<String> uploadImage(String filePath) async {
     final user = _auth.currentUser;
-    if (user == null) throw Exception('User must be logged in to upload images');
+    if (user == null) {
+      throw Exception('User must be logged in to upload images');
+    }
 
     final fileName = '${_uuid.v4()}.jpg';
     final ref = _storage.ref().child('images/${user.uid}/$fileName');
