@@ -43,6 +43,27 @@ class JournalEntry {
     );
   }
 
+  factory JournalEntry.fromMap(Map<String, dynamic> map, String id) {
+    return JournalEntry(
+      id: id,
+      userId: map['userId'] ?? '',
+      username: map['username'] ?? '',
+      content: map['content'] ?? '',
+      createdAt: map['createdAt'] is Timestamp 
+          ? (map['createdAt'] as Timestamp).toDate()
+          : DateTime.parse(map['createdAt'].toString()),
+      updatedAt: map['updatedAt'] != null
+          ? (map['updatedAt'] is Timestamp 
+              ? (map['updatedAt'] as Timestamp).toDate()
+              : DateTime.parse(map['updatedAt'].toString()))
+          : null,
+      imageUrl: map['imageUrl'],
+      tags: List<String>.from(map['tags'] ?? []),
+      aiSummary: map['aiSummary'],
+      mood: map['mood'],
+    );
+  }
+
   Map<String, dynamic> toMap() {
     return {
       'userId': userId,

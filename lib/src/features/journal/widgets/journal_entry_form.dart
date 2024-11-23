@@ -82,7 +82,8 @@ class _JournalEntryFormState extends ConsumerState<JournalEntryForm> {
 
       // Upload new image if selected
       if (_localImagePath != null) {
-        finalImageUrl = await journalNotifier.uploadImage(_localImagePath!);
+        final imageFile = File(_localImagePath!);
+        finalImageUrl = await journalNotifier.uploadImage(imageFile);
       }
 
       if (widget.initialEntry != null) {

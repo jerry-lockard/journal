@@ -1,6 +1,6 @@
 # Journal - A Modern Flutter Journaling App
 
-A beautiful and intelligent journaling application built with Flutter, featuring Material You dynamic theming, Firebase integration, and Gemini AI-powered insights.
+A beautiful and intelligent journaling application built with Flutter, featuring Material You dynamic theming, Firebase Realtime Database, and Gemini AI-powered insights.
 
 ## Features
 
@@ -41,7 +41,7 @@ A beautiful and intelligent journaling application built with Flutter, featuring
   - Smart content analysis
 
 - 🔥 **Firebase Backend**
-  - Real-time data sync
+  - Realtime Database for instant updates
   - Secure authentication
   - User-specific storage
   - Cloud storage for images
@@ -80,6 +80,7 @@ FIREBASE_APP_ID=your_firebase_app_id
 FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
 FIREBASE_PROJECT_ID=your_project_id
 FIREBASE_STORAGE_BUCKET=your_storage_bucket
+FIREBASE_DATABASE_URL=your_database_url
 
 # Google Gemini AI
 GEMINI_API_KEY=your_gemini_api_key
@@ -100,6 +101,7 @@ flutter run
 ### Firebase Setup
 
 1. Create a new Firebase project
+
 2. Enable Authentication:
    - Go to Authentication > Sign-in methods
    - Enable Email/Password authentication
@@ -111,12 +113,21 @@ flutter run
    - Set up security rules:
 
    ```javascript
-   rules_version = '2';
-   service cloud.firestore {
-     match /databases/{database}/documents {
-       match /entries/{entryId} {
-         allow read: if request.auth != null && resource.data.userId == request.auth.uid;
-         allow write: if request.auth != null && request.resource.data.userId == request.auth.uid;
+   {
+     "rules": {
+       "users": {
+         "$uid": {
+           ".read": "$uid === auth.uid",
+           ".write": "$uid === auth.uid",
+           "entries": {
+             "$entryId": {
+               ".validate": "newData.hasChildren(['userId', 'content', 'createdAt']) && newData.child('userId').val() === auth.uid"
+             }
+           },
+           "settings": {
+             ".validate": "newData.parent().parent().parent().child('users').child(auth.uid).exists()"
+           }
+         }
        }
      }
    }
@@ -130,7 +141,11 @@ flutter run
    rules_version = '2';
    service firebase.storage {
      match /b/{bucket}/o {
-       match /images/{userId}/{filename} {
+       match /journal_images/{userId}/{filename} {
+         allow read: if request.auth != null;
+         allow write: if request.auth != null && request.auth.uid == userId;
+       }
+       match /profile_images/{userId}/{filename} {
          allow read: if request.auth != null;
          allow write: if request.auth != null && request.auth.uid == userId;
        }
@@ -185,7 +200,7 @@ lib/
 
 ### Architecture Overview
 
-The project follows a feature-first architecture with the following organization:
+The project follows a feature-first architecture with clean separation of concerns:
 
 1. **Features Directory**: Contains feature-specific modules
    - Each feature is self-contained with its own models, services, and UI
@@ -235,6 +250,7 @@ The project follows a feature-first architecture with the following organization
 
 ### UI/UX
 
+- `dynamic_color`: ^1.6.6
 - `google_fonts`: ^6.1.0
 - `dynamic_color`: ^1.6.8
 - `image_picker`: ^1.0.4
@@ -247,13 +263,6 @@ View `pubspec.yaml` for complete list
 
 ## Features in Detail
 
-### User Authentication
-
-- Email/password authentication
-- User profile management
-- Secure session handling
-- Protected routes
-
 ### Journal Entries
 
 - Rich text content
@@ -264,11 +273,11 @@ View `pubspec.yaml` for complete list
 
 ### Image Management
 
-- Image selection from gallery
+- User-specific storage paths
 - Automatic compression
-- User-specific storage
 - Preview functionality
 - Secure access control
+- Error handling
 
 ### State Management
 
@@ -277,6 +286,7 @@ View `pubspec.yaml` for complete list
 - Journal entry state
 - Loading states
 - Error handling
+- Type safety
 
 ## Contributing
 
@@ -289,7 +299,7 @@ View `pubspec.yaml` for complete list
 ## Security
 
 - User authentication required for all operations
-- Firestore security rules enforce user-specific access
+- Realtime Database security rules enforce user-specific access
 - Storage rules protect user uploads
 - Environment variables for sensitive keys
 - Secure image handling
@@ -300,7 +310,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Acknowledgments
 
-- Flutter team for the amazing framework
-- Firebase for the robust backend
-- Google for the Gemini AI API
-- The open-source community for inspiration
+- Flutter team for an amazing framework
+- Firebase team for robust backend services
+- Google for Gemini AI
+- The open-source community

@@ -1,7 +1,9 @@
+import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../../journal/models/journal_entry.dart'; // Unified import for JournalEntry
-import '../services/journal_service.dart';
+import '../models/journal_entry.dart';
+import '../../../shared/firebase/services/database_service.dart';
+import '../../../shared/firebase/services/storage_service.dart';
 import '../../ai/providers/ai_provider.dart';
 
 // Auth state provider
@@ -14,122 +16,104 @@ final currentUserProvider = Provider<User?>((ref) {
   return ref.watch(authStateProvider).value;
 });
 
-final journalServiceProvider = Provider((ref) {
-  final aiService = ref.watch(aiServiceProvider);
-  return JournalService(aiService);
+final databaseServiceProvider = Provider((ref) {
+  return DatabaseService();
+});
+
+final storageServiceProvider = Provider((ref) {
+  return StorageService();
 });
 
 final selectedDateProvider = StateProvider<DateTime>((ref) => DateTime.now());
 
 final entriesForDateProvider =
-    StreamProvider.family<List<JournalEntry>, DateTime>(
-  (ref, date) {
-    final journalService = ref.watch(journalServiceProvider);
-    final user = ref.watch(currentUserProvider);
-    if (user == null) return Stream.value([]);
-    return journalService.getEntriesForDate(
-        date); // Ensure this returns the correct JournalEntry type
-  },
-);
+    StreamProvider.family<List<JournalEntry>, DateTime>((ref, date) {
+  final databaseService = ref.watch(databaseServiceProvider);
+  final user = ref.watch(currentUserProvider);
+  if (user == null) return Stream.value([]);
+  return databaseService.getEntriesForDate(date);
+});
 
 final entryCountsProvider = FutureProvider<Map<DateTime, int>>((ref) async {
-  final journalService = ref.watch(journalServiceProvider);
+  final databaseService = ref.watch(databaseServiceProvider);
   final user = ref.watch(currentUserProvider);
   if (user == null) return {};
 
   final now = DateTime.now();
   final startDate = DateTime(now.year, now.month - 1, 1);
   final endDate = DateTime(now.year, now.month + 1, 0);
-  return journalService.getEntryCountsByDateRange(startDate, endDate);
+  return databaseService.getEntryCountsByDateRange(startDate, endDate);
 });
 
 class JournalNotifier extends StateNotifier<AsyncValue<void>> {
-  final JournalService _journalService;
-  final Ref _ref;
-
-  JournalNotifier(this._journalService, this._ref)
+  JournalNotifier(this._databaseService, this._storageService, this._aiService)
       : super(const AsyncValue.data(null));
+
+  final DatabaseService _databaseService;
+  final StorageService _storageService;
+  final AIService _aiService;
+
+  Future<String?> uploadImage(File imageFile) async {
+    return _storageService.uploadJournalImage(imageFile);
+  }
 
   Future<void> createEntry({
     required String content,
     String? imageUrl,
     List<String> tags = const [],
   }) async {
-    final user = _ref.read(currentUserProvider);
-    if (user == null) {
-      state = AsyncValue.error(
-        Exception('Must be logged in to create entries'),
-        StackTrace.current,
-      );
-      return;
-    }
-
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() async {
-      await _journalService.createEntry(
+
+    try {
+      // Generate AI content
+      final aiSummary = await _aiService.generateSummary(content);
+      final mood = await _aiService.analyzeMood(content);
+      final suggestedTags = await _aiService.suggestTags(content);
+
+      // Merge user-provided and AI-suggested tags
+      final allTags = {...tags, ...suggestedTags}.toList();
+
+      await _databaseService.createEntry(
         content: content,
         imageUrl: imageUrl,
-        tags: tags,
+        tags: allTags,
+        aiSummary: aiSummary,
+        mood: mood,
       );
-    });
+
+      state = const AsyncValue.data(null);
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+    }
   }
 
   Future<void> updateEntry(JournalEntry entry) async {
-    final user = _ref.read(currentUserProvider);
-    if (user == null || user.uid != entry.userId) {
-      state = AsyncValue.error(
-        Exception('Unauthorized to update this entry'),
-        StackTrace.current,
-      );
-      return;
-    }
-
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() async {
-      await _journalService.updateEntry(entry);
-    });
+
+    try {
+      await _databaseService.updateEntry(entry);
+      state = const AsyncValue.data(null);
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+    }
   }
 
   Future<void> deleteEntry(String entryId) async {
-    final user = _ref.read(currentUserProvider);
-    if (user == null) {
-      state = AsyncValue.error(
-        Exception('Must be logged in to delete entries'),
-        StackTrace.current,
-      );
-      return;
-    }
-
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() async {
-      await _journalService.deleteEntry(entryId);
-    });
-  }
 
-  Future<String?> uploadImage(String filePath) async {
-    final user = _ref.read(currentUserProvider);
-    if (user == null) {
-      state = AsyncValue.error(
-        Exception('Must be logged in to upload images'),
-        StackTrace.current,
-      );
-      return null;
-    }
-
-    state = const AsyncValue.loading();
     try {
-      final url = await _journalService.uploadImage(filePath);
+      await _databaseService.deleteEntry(entryId);
       state = const AsyncValue.data(null);
-      return url;
-    } catch (error, stackTrace) {
-      state = AsyncValue.error(error, stackTrace);
-      return null;
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
     }
   }
 }
 
 final journalNotifierProvider =
     StateNotifierProvider<JournalNotifier, AsyncValue<void>>((ref) {
-  final journalService = ref.watch(journalServiceProvider);
-  return JournalNotifier(journalService, ref);
+  final databaseService = ref.watch(databaseServiceProvider);
+  final storageService = ref.watch(storageServiceProvider);
+  final aiService = ref.watch(aiServiceProvider);
+  return JournalNotifier(databaseService, storageService, aiService);
 });

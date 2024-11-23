@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import '../shared/custom_calendar.dart';
 import '../shared/widgets/theme_toggle_button.dart';
+import '../shared/widgets/expandable_fab.dart';
 import '../features/journal/providers/journal_provider.dart';
 import '../features/journal/widgets/journal_entry_card.dart';
 import '../features/journal/widgets/journal_entry_form.dart';
@@ -236,6 +237,7 @@ class HomeScreen extends ConsumerWidget {
           ),
         ],
       ),
+      floatingActionButton: const ExpandableFab(),
     );
   }
 }

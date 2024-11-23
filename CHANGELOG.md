@@ -9,6 +9,61 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Gemini AI integration for intelligent journaling
+  - Entry summaries
+  - Smart tag suggestions
+  - Mood analysis
+  - Contextual insights
+- Firebase Realtime Database integration
+  - Real-time data synchronization
+  - Offline support
+  - Better performance
+- Enhanced Firebase Storage integration
+  - Improved image upload handling
+  - User-specific storage paths
+  - Better error handling
+- Shared Firebase services
+  - Centralized configuration
+  - Reusable storage service
+  - Reusable database service
+- User settings management
+  - Settings synchronization
+  - User preferences storage
+- Enhanced error handling and validation
+- Comprehensive type safety improvements
+
+### Changed
+
+- Migrated from Firestore to Realtime Database
+- Restructured Firebase services
+  - Moved to shared/firebase directory
+  - Centralized configuration
+  - Better separation of concerns
+- Enhanced JournalProvider
+  - Better integration with Firebase services
+  - Improved error handling
+  - Type-safe operations
+- Updated image handling
+  - Better file management
+  - Improved upload process
+  - Enhanced error handling
+- Improved data models
+  - Added fromMap/toMap methods
+  - Better null safety
+  - Enhanced type checking
+
+### Security
+
+- Enhanced Firebase security rules for Realtime Database
+- Improved file upload security
+- Better error handling for unauthorized operations
+- Stronger input validation
+- Enhanced data sanitization
+
+## [0.2.0] - 2024-01-XX
+
+### Added
+
 - Firebase Authentication integration
 - User-specific journal entries with `userId` and `username` fields
 - Image upload functionality with Firebase Storage
