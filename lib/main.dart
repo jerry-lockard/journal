@@ -10,8 +10,8 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
 
-  const keyApplicationId = 'kgCzKQ2mzyNVdjOuDncJ6TYurrFeOa6GVRiyk1Rg';
-  const keyClientKey = 'n626CimuNzhmFEmxnunoQj5HKv6HWw3MsjUNOF7e';
+  const keyApplicationId = '';
+  const keyClientKey = '';
   const keyParseServerUrl = 'https://parseapi.back4app.com';
 
   await Parse().initialize(
