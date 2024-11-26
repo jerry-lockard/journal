@@ -5,14 +5,18 @@ import 'package:provider/provider.dart';
 import 'services/auth/auth_service.dart';
 import 'screens/auth/login_screen.dart';
 import 'services/push_notifications/push_notification_service.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
 
-  const keyApplicationId = '';
-  const keyClientKey = '';
-  const keyParseServerUrl = 'https://parseapi.back4app.com';
+  // Load environment variables
+  await dotenv.load();
+
+  var keyApplicationId = dotenv.env['PARSE_APPLICATION_ID'] ?? '';
+  var keyClientKey = dotenv.env['PARSE_CLIENT_KEY'] ?? '';
+  var keyParseServerUrl = dotenv.env['PARSE_SERVER_URL'] ?? '';
 
   await Parse().initialize(
     keyApplicationId,

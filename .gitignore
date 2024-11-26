@@ -10,9 +10,6 @@
 .svn/
 migrate_working_dir/
 
-# Environment files
-.env
-
 # IntelliJ related
 *.iml
 *.ipr
@@ -44,3 +41,10 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
